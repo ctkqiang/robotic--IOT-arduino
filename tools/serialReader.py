@@ -24,6 +24,7 @@ os.system("ls /dev/{tty,cu}.*")
 # Open Serial port:
 ser = S.Serial("/dev/cu.usbserial-1A120")
 
+
 def main():
     # Print out Serial Port name:
     portName = ser.name
@@ -37,8 +38,8 @@ def main():
         while True:
             print("Serial Data ==> ",  newLine)
             time.sleep(1)
-    
-    
+
+
 if __name__ == "__main__":
     main()
     ser.close()
