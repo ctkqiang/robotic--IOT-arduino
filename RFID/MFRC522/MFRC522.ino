@@ -35,33 +35,69 @@
 
 #include <SPI.h>
 #include <MFRC522.h>
+#include <Keyboard.h>
 
-#define RST_PIN         9          // Configurable, see typical pin layout above
-#define SS_PIN          10         // Configurable, see typical pin layout above
+constexpr uint8_t RST_PIN = 9;  // Configurable, see typical pin layout above
+constexpr uint8_t SS_PIN = 10;  // Configurable, see typical pin layout above
 
 MFRC522 mfrc522(SS_PIN, RST_PIN);  // Create MFRC522 instance
 
+int RXLED = 17;
+
 void setup() {
-	Serial.begin(9600);		// Initialize serial communications with the PC
-	while (!Serial);		// Do nothing if no serial port is opened (added for Arduinos based on ATMEGA32U4)
-	SPI.begin();			// Init SPI bus
-	mfrc522.PCD_Init();		// Init MFRC522
-	delay(4);				// Optional delay. Some board do need more time after init to be ready, see Readme
-	mfrc522.PCD_DumpVersionToSerial();	// Show details of PCD - MFRC522 Card Reader details
-	Serial.println(F("Scan PICC to see UID, SAK, type, and data blocks..."));
+  pinMode(RXLED, OUTPUT); 
+  Serial.begin(9600);
+  //while (!Serial);    // Do nothing if no serial port is opened (added for Arduinos based on ATMEGA32U4)
+  SPI.begin();      // Init SPI bus
+  mfrc522.PCD_Init();   // Init MFRC522
+  mfrc522.PCD_DumpVersionToSerial();  // Show details of PCD - MFRC522 Card Reader details
+  Keyboard.begin();
+}
+
+void readHex(byte *buffer, byte bufferSize) {
+  for (byte i = 0; i < bufferSize; i++) {
+    Serial.print(buffer[i] < 0x10 ? " 0" : " ");
+    Serial.print(buffer[i], HEX);
+  }
 }
 
 void loop() {
-	// Reset the loop if no new card present on the sensor/reader. This saves the entire process when idle.
-	if ( ! mfrc522.PICC_IsNewCardPresent()) {
-		return;
-	}
+  // Look for new cards
+  if ( ! mfrc522.PICC_IsNewCardPresent()) {
+    digitalWrite(RXLED, HIGH); 
+    return;
+  }
 
-	// Select one of the cards
-	if ( ! mfrc522.PICC_ReadCardSerial()) {
-		return;
-	}
+    // Select one of the cards
+  if ( ! mfrc522.PICC_ReadCardSerial()) {
+    return;
+  }
+  
+  digitalWrite(RXLED, LOW);
+  Serial.print("RFID UID: ");
+  readHex(mfrc522.uid.uidByte, mfrc522.uid.size);
+  Serial.println();
 
-	// Dump debug info about the card; PICC_HaltA() is automatically called
-	mfrc522.PICC_DumpToSerial(&(mfrc522.uid));
+
+  // SET YOUR UID HERE (you should see it in your serial monitor)
+  if (mfrc522.uid.uidByte[0] == 0x00 && 
+      mfrc522.uid.uidByte[1] == 0x00 &&
+      mfrc522.uid.uidByte[2] == 0x00 &&
+      mfrc522.uid.uidByte[3] == 0x00) {
+      Serial.println("Correct UID");
+  }
+  else {
+    Serial.println("Incorrect UID");
+    delay(5000);
+    return;
+  }
+
+  digitalWrite(RXLED, HIGH);
+
+  Serial.println("Printing password...");
+  Keyboard.print("39432789");
+  delay(1000);
+  Keyboard.write(10);
+  
+  delay(5000);                                          
 }

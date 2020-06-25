@@ -16,6 +16,7 @@
 */
 
 #include <SPI.h>
+#include <Keyboard.h>
 #include <MFRC522.h>
 #define RST_PIN         9          // Configurable, see typical pin layout above
 #define SS_PIN          10         // Configurable, see typical pin layout above
@@ -65,7 +66,7 @@ void loop() {
 
   //Show UID on serial monitor
   Serial.print("UID tag :");
-  String RFIDtag = "D7 43 AF 7B"u;
+  String RFIDtag = "D7 43 AF 7B";
   byte letter;
   for (byte i = 0; i < mfrc522.uid.size; i++)
   {
